@@ -177,4 +177,5 @@ SELECT b.book_id, b.title, b.author, b.genre, b.stock - COALESCE(SUM(o.quantity)
 FROM Books AS b
 LEFT JOIN Orders AS o ON b.book_id = o.book_id
 GROUP BY b.book_id, b.title, b.author, b.genre, b.stock
+
 ORDER BY b.book_id;
