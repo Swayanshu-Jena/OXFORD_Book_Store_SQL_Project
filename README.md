@@ -3,20 +3,21 @@
 <img width="3262" height="1160" alt="OXFORD" src="https://github.com/user-attachments/assets/54911efd-58bb-434b-a2ee-ad8de2f83668" />
 
 ## Overview
-This project involves a comprehensive analysis of Netflix's movies and TV shows data using SQL. The goal is to extract valuable insights and answer various business questions based on the dataset. The following README provides a detailed account of the project's objectives, business problems, solutions, findings, and conclusions.
+This project is a complete SQL analysis of an online bookstore's database. It uses three core tables—Books, Customers, and Orders—to transform raw data into actionable business intelligence. The goal was to uncover key insights into sales trends, inventory status, and customer behavior to inform strategic decisions. The analysis demonstrates strong proficiency in writing complex SQL queries for data-driven storytelling. The following README provides a detailed account of the project's objectives, business problems, solutions, findings, and conclusions.
 
 ## Objectives
 
-- Analyze the distribution of content types (movies vs TV shows).
-- Identify the most common ratings for movies and TV shows.
-- List and analyze content based on release years, countries, and durations.
-- Explore and categorize content based on specific criteria and keywords.
+- Analyze book distribution across genres and their pricing.
+- Identify sales trends and calculate total revenue.
+- Understand customer demographics and purchasing patterns.
+- Determine the most popular books and authors.
+- Manage inventory by calculating remaining stock levels.
 
 ## Dataset
 
-The data for this project is sourced from the Kaggle dataset:
+The sourced dataset for this project:
 
-- **Dataset Link:** [Movies Dataset](https://www.kaggle.com/datasets/shivamb/netflix-shows?resource=download)
+- **Dataset Link:** [Bookstore Dataset](https://drive.google.com/drive/folders/1naLGntA42mPlT4EYKRuuIRtIGTnNCKGP?usp=drive_link)
 
 ## Schema
 
