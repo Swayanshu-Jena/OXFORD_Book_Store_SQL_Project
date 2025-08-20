@@ -15,10 +15,6 @@ This project is a complete SQL analysis of an online bookstore's database. It us
 
 ## Dataset
 
-The sourced dataset for this project:
-
-- **Dataset Link:** [Bookstore Dataset](https://drive.google.com/drive/folders/1naLGntA42mPlT4EYKRuuIRtIGTnNCKGP?usp=drive_link)
-
 ## Schema
 
 ```sql
