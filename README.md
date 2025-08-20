@@ -13,238 +13,310 @@ This project is a complete SQL analysis of an online bookstore's database. It us
 - Determine the most popular books and authors.
 - Manage inventory by calculating remaining stock levels.
 
-## Dataset
+## Data Model Structure
+
+<img width="800" height="1000" alt="Schema" src="https://github.com/user-attachments/assets/0010b61d-f5e2-4ced-96d9-52a02d52506c" />
 
 ## Schema
 
 ```sql
-DROP TABLE IF EXISTS Netflix;
-CREATE TABLE Netflix (
-    show_id VARCHAR(5) PRIMARY KEY,
-    type VARCHAR(10) NOT NULL,
-    title VARCHAR(250) NOT NULL,
-    director VARCHAR(550),
-    casts VARCHAR(1050),
-    country VARCHAR(550),
-    date_added VARCHAR(55),
-    release_year INT,
-    rating VARCHAR(15),
-    duration VARCHAR(15),
-    listed_in VARCHAR(250),
-    description VARCHAR(550)
+-- Books Table
+DROP TABLE IF EXISTS Books;
+CREATE TABLE Books (
+    Book_ID INT PRIMARY KEY,
+    Title VARCHAR(100) NOT NULL,
+    Author VARCHAR(100) NOT NULL,
+    Genre VARCHAR(50) NOT NULL,
+    Published_Year INT NOT NULL,
+    Price NUMERIC(10, 2) NOT NULL,
+    Stock INT NOT NULL,
+    CHECK (Published_Year > 0),
+    CHECK (Price >= 0),
+    CHECK (Stock >= 0)
+);
+
+-- Customers Table
+DROP TABLE IF EXISTS Customers;
+CREATE TABLE Customers (
+    Customer_ID INT PRIMARY KEY,
+    Name VARCHAR(100) NOT NULL,
+    Email VARCHAR(100) NOT NULL,
+    Phone VARCHAR(15) NOT NULL,
+    City VARCHAR(50) NOT NULL,
+    Country VARCHAR(150) NOT NULL,
+    UNIQUE (Email)
+);
+
+-- Orders Table
+DROP TABLE IF EXISTS Orders;
+CREATE TABLE Orders (
+    Order_ID SERIAL PRIMARY KEY,
+    Customer_ID INT NOT NULL REFERENCES Customers(Customer_ID),
+    Book_ID INT NOT NULL REFERENCES Books(Book_ID),
+    Order_Date DATE NOT NULL,
+    Quantity INT NOT NULL,
+    Total_Amount NUMERIC(10, 2) NOT NULL,
+    CHECK (Quantity > 0),
+    CHECK (Total_Amount >= 0)
 );
 ```
 
 ## Business Problems and Solutions
 
-### 1. Count the Number of Movies vs TV Shows
+## Basic Problems
 
-```sql
-SELECT type, COUNT(*) AS Total
-FROM Netflix
-GROUP BY type;
-```
-
-**Objective:** Determine the distribution of content types on Netflix.
-
-### 2. Find the Most Common Rating for Movies and TV Shows
-
-```sql
-WITH Rating_Counts AS (
-SELECT type, rating, COUNT(*) AS rating_count
-FROM netflix
-GROUP BY type, rating
-),
-Ranked_Ratings AS (
-SELECT type, rating, rating_count, RANK() OVER (PARTITION BY type ORDER BY rating_count DESC) AS rank
-FROM Rating_Counts
-)
-SELECT type, rating AS most_frequent_rating
-FROM Ranked_Ratings
-WHERE rank = 1;
-```
-
-**Objective:** Identify the most frequently occurring rating for each type of content.
-
-### 3. List All Movies Released in a Specific Year (e.g., 2020)
-
-```sql
-SELECT show_id, type, title, director, rating, duration, release_year
-FROM Netflix
-WHERE release_year = '2020' AND type = 'Movie';
-```
-
-**Objective:** Retrieve all movies released in a specific year.
-
-### 4. Find the Top 5 Countries with the Most Content on Netflix
-
-```sql
-SELECT country, COUNT(*) as content_count 
-FROM netflix
-WHERE country IS NOT NULL
-GROUP BY country 
-ORDER BY content_count DESC 
-LIMIT 5;
-```
-
-**Objective:** Identify the top 5 countries with the highest number of content items.
-
-### 5. Identify the Longest Movie
+### 1. Retrieve all books in the "Fiction" genre
 
 ```sql
 SELECT *
-FROM Netflix
-WHERE type = 'Movie' AND duration IS NOT NULL
-ORDER BY SPLIT_PART(duration, ' ', 1)::INT DESC
+FROM Books
+WHERE genre = 'Fiction';
+```
+
+**Objective:**  Retrieve all books classified under the "Fiction" genre.
+
+### 2. Find books published after the year 1950
+
+```sql
+SELECT *
+FROM Books
+WHERE published_year > '1950';
+```
+
+**Objective:** Find all books that were published after the year 1950.
+
+### 3. List all customers from Canada
+
+```sql
+SELECT *
+FROM Customers
+WHERE country = 'Canada';
+```
+
+**Objective:** List all customers who are located in Canada.
+
+### 4. Show orders placed in November 2023
+
+```sql
+SELECT *
+FROM Orders
+WHERE Order_date BETWEEN '2023-11-01' AND '2023-11-30';
+```
+
+**Objective:** Show all orders that were placed in the month of November 2023.
+
+### 5. Retrieve the total stock of books available
+
+```sql
+SELECT SUM(stock) AS Total_Books_In_Stock
+FROM Books;
+```
+
+**Objective:** Calculate the total number of books currently available in stock.
+
+### 6. Find the details of the most expensive book
+
+```sql
+SELECT *
+FROM Books
+WHERE price = (SELECT MAX(price) FROM Books);
+```
+
+**Objective:** Find the details of the most expensive book in the inventory.
+
+### 7. Show customers who ordered more than 1 quantity
+
+```sql
+SELECT c.customer_id, c.name AS Customer_Name, c.email, c.phone, c.city, c.country, o.order_date, o.quantity
+FROM Orders AS o
+JOIN Customers AS c ON o.customer_id = c.customer_id
+WHERE o.quantity > 1
+ORDER BY c.customer_id;
+```
+
+**Objective:** Identify all customers who have ordered more than one copy of a book in a single order.
+### 8. Retrieve orders where total amount exceeds $20
+
+```sql
+SELECT o.order_id, c.name AS Customer_Name, b.title AS Book, o.order_date, o.quantity, o.total_amount
+FROM Orders AS o
+JOIN Customers AS c ON o.customer_id = c.customer_id
+JOIN Books AS b ON o.book_id = b.book_id
+WHERE o.total_amount > 20.00
+ORDER BY o.order_id;
+```
+
+**Objective:** Retrieve all orders where the total amount spent exceeds $20.
+### 9. List all genres available
+
+```sql
+SELECT DISTINCT genre
+FROM Books
+ORDER BY genre;
+```
+
+**Objective:**  List all unique genres available in the book catalog.
+
+### 10. Find the book with the lowest stock
+
+```sql
+SELECT *
+FROM Books
+ORDER BY stock
 LIMIT 1;
 ```
 
-**Objective:** Find the movie with the longest duration.
+**Objective:** Find the book with the lowest remaining stock quantity.
 
-### 6. Find Content Added in the Last 5 Years
-
-```sql
-SELECT *
-FROM netflix
-WHERE TO_DATE(date_added, 'Month DD, YYYY') >= CURRENT_DATE - INTERVAL '5 years'
-```
-
-**Objective:** Retrieve content added to Netflix in the last 5 years.
-
-### 7. Find All Movies/TV Shows by Director 'Rajiv Chilaka'
+### 11. Calculate monthly revenue
 
 ```sql
-SELECT *
-FROM Netflix
-WHERE director ILIKE '%Rajiv Chilaka%';
+SELECT 
+    TO_CHAR(order_date, 'Month') AS Month_Name,
+    EXTRACT(MONTH FROM order_date) AS Month_Number,
+    EXTRACT(YEAR FROM order_date) AS Year,
+    SUM(total_amount) AS Total_Revenue
+FROM orders
+GROUP BY Month_Name, Month_Number, Year
+ORDER BY Year, Month_Number;
 ```
 
-**Objective:** List all content directed by 'Rajiv Chilaka'.
+**Objective:** Calculate the monthly revenue generated from all orders.
 
-### 8. List All TV Shows with More Than 5 Seasons
+### 12. Calculate total revenue
 
 ```sql
-SELECT *
-FROM Netflix
-WHERE type = 'TV Show' AND SPLIT_PART(duration, ' ', 1)::INT > 5
-ORDER BY SPLIT_PART(duration, ' ', 1)::INT;
+SELECT SUM(total_amount) AS Total_Revenue
+FROM orders;
 ```
 
-**Objective:** Identify TV shows with more than 5 seasons.
+**Objective:** Calculate the total overall revenue generated from all orders.
 
-### 9. Count the Number of Content Items in Each Genre
+
+## Advance Problems
+
+### 13. Total books sold for each genre
 
 ```sql
-WITH split_genres AS (
-  SELECT TRIM(UNNEST(STRING_TO_ARRAY(listed_in, ','))) AS single_genre
-  FROM Netflix
-)
-SELECT single_genre, COUNT(*) AS Total_Content
-FROM split_genres
-GROUP BY single_genre
-ORDER BY Total_Content DESC;
+SELECT b.genre, SUM(o.quantity) AS Total_books_Sold
+FROM Books AS b
+JOIN Orders AS o ON b.book_id = o.book_id
+GROUP BY b.genre
+ORDER BY Total_books_Sold DESC;
 ```
 
-**Objective:** Count the number of content items in each genre.
+**Objective:** Determine the total number of books sold for each genre.
 
-### 10.Find each year and the average numbers of content release in India on netflix. 
-return top 5 year with highest avg content release!
+### 14. Average price of Fantasy books
 
 ```sql
-WITH Indian_Content AS (
-  SELECT release_year, COUNT(*) AS Total_Content
-  FROM netflix
-  WHERE country ILIKE '%India%'
-  GROUP BY release_year
-)
-SELECT release_year, Total_Content AS Average_Content_Released
-FROM Indian_Content
-ORDER BY Total_Content DESC
-LIMIT 5;
+SELECT ROUND(AVG(price), 2) AS Average_Book_Price
+FROM Books WHERE genre = 'Fantasy';
 ```
 
-**Objective:** Calculate and rank years by the average number of content releases by India.
+**Objective:** Find the average price of books in the "Fantasy" genre.
 
-### 11. List All Movies that are Documentaries
+### 15. Customers with at least 2 orders
 
 ```sql
-SELECT *
-FROM Netflix
-WHERE type = 'Movie' AND listed_in ILIKE '%Documentaries%';
+SELECT c.customer_id, c.name AS Customer_Name, c.email, c.phone, c.city, c.country, COUNT(o.order_id) AS Total_Orders
+FROM Customers AS c
+JOIN Orders AS o ON c.customer_id = o.customer_id
+GROUP BY c.customer_id, c.name, c.email, c.phone, c.city, c.country
+HAVING COUNT(o.order_id) >= 2
+ORDER BY total_orders DESC;
 ```
 
-**Objective:** Retrieve all movies classified as documentaries.
+**Objective:** Identify customers who have placed at least two orders.
 
-### 12. Find All Content Without a Director
+### 16. Most frequently ordered book
 
 ```sql
-SELECT *
-FROM Netflix
-WHERE director IS NULL;
+SELECT b.book_id, b.title, b.author, b.genre, b.published_year, COUNT(o.book_id) AS Times_Ordered
+FROM Books AS b
+JOIN Orders AS o ON b.book_id = o.book_id
+GROUP BY b.book_id, b.title, b.author, b.genre, b.published_year
+ORDER BY Times_Ordered DESC
+LIMIT 1;
 ```
 
-**Objective:** List content that does not have a director.
+**Objective:** Find the most frequently ordered book.
 
-### 13. Find How Many Movies Actor 'Salman Khan' Appeared in the Last 10 Years
+### 17. Top 3 most expensive Fantasy books
 
 ```sql
-SELECT * FROM netflix
-WHERE type = 'Movie'
-AND casts ILIKE '%Salman Khan%' AND release_year >= EXTRACT(Year FROM CURRENT_DATE) - 10;
+SELECT * FROM Books
+WHERE genre = 'Fantasy'
+ORDER BY price DESC
+LIMIT 3;
 ```
 
-**Objective:** Count the number of movies featuring 'Salman Khan' in the last 10 years.
+**Objective:** Show the top 3 most expensive books in the 'Fantasy' genre.
 
-### 14. Find the Top 10 Actors Who Have Appeared in the Highest Number of Movies Produced in India
+### 18. Total books sold by each author
 
 ```sql
-WITH Actor_Apperance AS (
-SELECT TRIM(UNNEST(STRING_TO_ARRAY(casts, ','))) AS Actor, COUNT(*) AS Movies_Count
-FROM Netflix
-WHERE type = 'Movie' AND country ILIKE '%India%'
-GROUP BY Actor
-)
-SELECT Actor, Movies_Count
-FROM Actor_Apperance
-ORDER BY Movies_Count DESC
-LIMIT 10;
+SELECT b.author, SUM(o.quantity) AS Total_books_Sold
+FROM Books AS b
+JOIN Orders AS o ON b.book_id = o.book_id
+GROUP BY b.author
+ORDER BY Total_books_Sold DESC;
 ```
 
-**Objective:** Identify the top 10 actors with the most appearances in Indian-produced movies.
+**Objective:** Calculate the total quantity of books sold by each author.
 
-### 15. Categorize Content Based on the Presence of 'Kill' and 'Violence' Keywords
+### 19. Cities where customers spent over $30
 
 ```sql
-SELECT
-CASE 
-    WHEN description ILIKE '%kill%' OR description ILIKE '%violence%' THEN 'Bad'
-    ELSE 'Good'
-END AS content_category,
-COUNT(*) AS content_count
-FROM 
-    Netflix
-GROUP BY 
-    content_category
-ORDER BY 
-    content_count DESC;
+SELECT c.city, SUM(o.total_amount) AS Total_Amount_Spent
+FROM Customers AS c
+JOIN Orders AS o ON c.customer_id = o.customer_id
+GROUP BY c.city
+HAVING SUM(o.total_amount) > 30.00
+ORDER BY c.city;
 ```
 
-**Objective:** Categorize content as 'Bad' if it contains 'kill' or 'violence' and 'Good' otherwise. Count the number of items in each category.
+**Objective:** List the cities where the total spending by customers exceeds $30.
+
+### 20. Customer who spent the most
+
+```sql
+SELECT c.customer_id, c.name AS Customer_Name, c.email, c.phone, c.city, c.country, SUM(o.total_amount) AS Total_Spending
+FROM Customers AS c
+JOIN Orders AS o ON c.customer_id = o.customer_id
+GROUP BY c.customer_id, c.name, c.email, c.phone, c.city, c.country
+ORDER BY Total_Spending DESC
+LIMIT 1;
+```
+
+**Objective:** Identify the customer who has spent the most money on all orders.
+
+### 21. Calculate remaining stock after orders
+
+```sql
+SELECT b.book_id, b.title, b.author, b.genre, b.stock - COALESCE(SUM(o.quantity), 0) AS Remaining_Stock
+FROM Books AS b
+LEFT JOIN Orders AS o ON b.book_id = o.book_id
+GROUP BY b.book_id, b.title, b.author, b.genre, b.stock
+ORDER BY b.book_id;
+```
+
+**Objective:** Calculate the remaining stock for each book after subtracting all ordered quantities.
 
 ## Findings and Conclusion
 
-- **Content Distribution:** The dataset contains a diverse range of movies and TV shows with varying ratings and genres.
-- **Common Ratings:** Insights into the most common ratings provide an understanding of the content's target audience.
-- **Geographical Insights:** The top countries and the average content releases by India highlight regional content distribution.
-- **Content Categorization:** Categorizing content based on specific keywords helps in understanding the nature of content available on Netflix.
+- **Genre Popularity:** Identified the genres with the highest number of books sold, providing insight into customer reading preferences.
+- **Revenue Analysis:** Calculated the total revenue generated and broke it down by month to identify seasonal sales trends.
+- **Customer Insights:** Pinpointed the top-spending customers and those who are most loyal (placed multiple orders).
+- **Bestsellers:** Determined the most frequently ordered book and the author with the highest total sales.
+- **Inventory Status:** Calculated the remaining stock for each book after fulfilling all orders, highlighting items that need restocking.
+- **Geographical Reach:** The customer base is international, with orders coming from numerous countries around the world.
 
-This analysis provides a comprehensive view of Netflix's content and can help inform content strategy and decision-making.
-
-
+This SQL analysis extracts key business insights from bookstore data, demonstrating strong data querying and analysis skills. The project effectively transforms raw data into actionable intelligence for informed decision-making.
 
 ## Author - Swayanshu Jena
 
-This project is part of my portfolio, showcasing the SQL skills essential for data analyst roles. If you have any questions, feedback, or would like to collaborate, feel free to get in touch!
+This project is part of my portfolio, showcasing my SQL skills in database querying, analysis, and generating business intelligence. Open to feedback, questions, or potential collaboration.
 
 ### Stay Updated
 
