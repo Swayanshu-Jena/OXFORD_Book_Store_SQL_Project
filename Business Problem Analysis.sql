@@ -113,7 +113,7 @@ SELECT * FROM Orders;
 ---
 
 -- Advance Queries
--- 1) Retrieve the total number of books sold for each genre:
+-- 13) Retrieve the total number of books sold for each genre:
 SELECT b.genre, SUM(o.quantity) AS Total_books_Sold
 FROM Books AS b
 JOIN Orders AS o
@@ -121,12 +121,12 @@ ON b.book_id = o.book_id
 GROUP BY b.genre
 ORDER BY Total_books_Sold DESC;
 
--- 2) Find the average price of books in the "Fantasy" genre:
+-- 14) Find the average price of books in the "Fantasy" genre:
 SELECT ROUND(AVG(price), 2) AS Average_Book_Price
 FROM Books 
 WHERE genre = 'Fantasy';
 
--- 3) List customers who have placed at least 2 orders:
+-- 15) List customers who have placed at least 2 orders:
 SELECT c.customer_id, c.name AS Customer_Name, c.email, c.phone, c.city, c.country, COUNT(o.order_id) AS Total_Orders
 FROM Customers AS c
 JOIN Orders AS o ON c.customer_id = o.customer_id
@@ -134,7 +134,7 @@ GROUP BY c.customer_id, c.name, c.email, c.phone, c.city, c.country
 HAVING COUNT(o.order_id) >= 2
 ORDER BY total_orders DESC;
 
--- 4) Find the most frequently ordered book:
+-- 16) Find the most frequently ordered book:
 SELECT b.book_id, b.title, b.author, b.genre, b.published_year, COUNT(o.book_id) AS Times_Ordered
 FROM Books AS b
 JOIN Orders AS o ON b.book_id = o.book_id
@@ -142,13 +142,13 @@ GROUP BY b.book_id, b.title, b.author, b.genre, b.published_year
 ORDER BY Times_Ordered DESC
 LIMIT 1;
 
--- 5) Show the top 3 most expensive books of 'Fantasy' Genre:
+-- 17) Show the top 3 most expensive books of 'Fantasy' Genre:
 SELECT * FROM Books
 WHERE genre = 'Fantasy'
 ORDER BY price DESC
 LIMIT 3;
 
--- 6) Retrieve the total quantity of books sold by each author:
+-- 18) Retrieve the total quantity of books sold by each author:
 SELECT b.author, SUM(o.quantity) AS Total_books_Sold
 FROM Books AS b
 JOIN Orders AS o
@@ -156,7 +156,7 @@ ON b.book_id = o.book_id
 GROUP BY b.author
 ORDER BY Total_books_Sold DESC;
 
--- 7) List the cities where customers who spent over $30 are located:
+-- 19) List the cities where customers who spent over $30 are located:
 SELECT c.city, SUM(o.total_amount) AS Total_Amount_Spent
 FROM Customers AS c
 JOIN Orders AS o ON c.customer_id = o.customer_id
@@ -164,7 +164,7 @@ GROUP BY c.city
 HAVING SUM(o.total_amount) > 30.00
 ORDER BY c.city; 
 
--- 8) Find the customer who spent the most on orders:
+-- 20) Find the customer who spent the most on orders:
 SELECT c.customer_id, c.name AS Customer_Name, c.email, c.phone, c.city, c.country, SUM(o.total_amount) AS Total_Spending
 FROM Customers AS c
 JOIN Orders AS o ON c.customer_id = o.customer_id
@@ -172,10 +172,11 @@ GROUP BY c.customer_id, c.name, c.email, c.phone, c.city, c.country
 ORDER BY Total_Spending DESC
 LIMIT 1;
 
--- 9) Calculate the stock remaining after fulfilling all orders:
+-- 21) Calculate the stock remaining after fulfilling all orders:
 SELECT b.book_id, b.title, b.author, b.genre, b.stock - COALESCE(SUM(o.quantity), 0) AS Remaining_Stock
 FROM Books AS b
 LEFT JOIN Orders AS o ON b.book_id = o.book_id
 GROUP BY b.book_id, b.title, b.author, b.genre, b.stock
 
 ORDER BY b.book_id;
+
