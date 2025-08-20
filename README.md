@@ -1,1 +1,1 @@
-# Online_Book_Store_SQL_Project
+# OXFORD Book Store Data Analysis using SQL
